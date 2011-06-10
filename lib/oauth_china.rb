@@ -16,7 +16,7 @@ module OauthChina
 
     CONFIG = {}
 
-    attr_accessor  :request_token, :access_token, :consumer_options
+    attr_accessor  :request_token, :access_token, :consumer_options, :callback, :uid
 
     delegate :get, :post, :put, :delete, :to => :access_token
 
@@ -47,22 +47,21 @@ module OauthChina
       {
         :request_token        => request_token.token,
         :request_token_secret => request_token.secret,
-        :access_token         => access_token.nil? ? nil : access_token.token,
-        :access_token_secret  => access_token.nil? ? nil : access_token.secret
+        :access_token         => access_token.try(:token),
+        :access_token_secret  => access_token.try(:secret)
       }
     end
 
     def key; config['key'];  end
     def secret; config['secret']; end
     def url; config['url']; end
-    def callback; config["callback"]; end
+    def callback; @callback || config["sync_callback"]; end
 
     def config
       CONFIG[self.name] ||= lambda do
         require 'yaml'
         filename = "#{Rails.root}/config/oauth/#{self.name}.yml"
-        file     = File.open(filename)
-        yaml     = YAML.load(file)
+        yaml     = YAML.load_file(filename)
         return yaml[Rails.env]
       end.call
     end
@@ -86,4 +85,5 @@ module OauthChina
   autoload :Qq,             'oauth_china/strategies/qq'
   autoload :Sohu,           'oauth_china/strategies/sohu'
   autoload :Netease,        'oauth_china/strategies/netease'
+  autoload :Qzone,          'oauth_china/strategies/qzone'
 end
